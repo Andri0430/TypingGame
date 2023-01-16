@@ -1,0 +1,162 @@
+﻿@page "/"
+
+@*menghubungkan dengan folder model agar dapat mengakses segala property yang ada stats*@
+@using TypingGame.Models;
+
+<style>
+    .game-text{
+        font-size:72px;
+        font-weight:bold;
+        margin-right:4px;
+    }
+    
+    /*mengubah warna huruf jika benar*/
+    .correct{
+        color:green;
+    }
+
+    /*mengubah warna huruf jika salah*/
+    .wrong{
+        color:red;
+    }
+</style>
+
+@*menghubungkan dengan parentdiv
+membuat even onkeydown yang di hubungkan dengan method onType()*@
+<div @ref="parentDiv" @onkeydown = "onType" tabindex="0">
+    <div class="rows">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    @*menampilkan huruf random yang terdapat pada generateChar menggunakan perulangan*@
+                    @for (var ch = 0; ch < generateChar.Length; ch++)
+                    {
+                        @*memanggil huruf acak dari generateChar, dan menyisipkan class status[index]*@
+                        <span class="game-text @status[ch]">@generateChar[ch]</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rows">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+@*                    menampilkan data-data berupa informasi yang di tampilkan ke web,datanya dapat berupa 
+                    correct,missed,total,dan accuracy*@
+                    <span>Correct : @stats.Correct</span>
+                    <span>Missed : @stats.Missed</span>
+                    <span>Total : @stats.Total</span>
+                    <span>Accuracy : @stats.Accuracy %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code{
+    //variabel alphabet yang di gunakan untuk menampilkan huruf pada halaman web
+    string alphabet = "QWERTYUIOPASDFGHJKLZXCVBNM";
+    //generateChar di gunakan untuk menampung huruf random dari variabel alphabet
+    char[] generateChar = new char[7];
+    //status di gunakan untuk menambahkan keterangan pada class,untuk dapat memberi warna pada huruf,
+    //Contoh : warna hijau untuk benar,dan merah untuk salah.
+    string[] status = new string[7];
+
+    //membuat fungsi random untuk mengacak huruf alphabet yang terdapat pada variabel string alphabet
+    Random random = new Random();
+    //menginstansiasi class Stats yang berada pada folder Models,yang akan menghasilkan objek
+    Stats stats = new Stats();
+
+    public ElementReference parentDiv;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await parentDiv.FocusAsync();
+        }
+    }
+
+
+    private void SetUpGame()
+    {
+        //menampilkan variabel yang terdapat pada class stats,berupa: correct,missed,total,dan accuracy
+        stats.Correct = 0;
+        stats.Missed = 0;
+        stats.Total = 0;
+        stats.Accuracy = 0;
+
+        //mengacak huruf yang terdapat pada variabel alphabet menggunakan fungsi random, kemudian di tampung ke varibel array generateChar
+        for(int a = 0; a<7; a++)
+        {
+            generateChar[a] = alphabet[random.Next(alphabet.Length)];
+        }
+    }
+
+    //method untuk menjalankan game
+    protected override void OnInitialized()
+    {
+        SetUpGame();
+    }
+
+    //membuat variabel cursor untuk mengetahui letak posisi huruf yang sedang di ketik
+    int cursor = 0;
+
+    //membuat method onType yang berfungsi mengecek data yang kita inputkan sesuai tidak dengan huruf yang di tampilkan di halaman web.
+    //yang menggunakan fungsi keyboard "onkeydown"
+    public void onType(KeyboardEventArgs e)
+    {
+        //kondisi untuk mengecek, jika huruf/data yang kita inputan benar, yang akan terjadi adalah:
+        //*variabel correct akan di ++
+        //*mengecek status,jika benar akan menampilkan warna hijau
+        //*Dan kursor akan ++ ke indeks berikutnya
+        if(e.Key == generateChar[cursor].ToString().ToLower())
+        {
+            stats.Correct++;
+            status[cursor] = "correct";
+            cursor++;
+        }
+        //Kondisi ketika kita menginputkan huruf yang tidak sesuai/salah
+        else
+        {
+            //maka variabel missed akan menambah ++
+            stats.Missed++;
+            //mengirimkan status wrong berdasarkan huruf yang salah kita inputkan.
+            //dan merubahnya menjadi warna merah.
+            status[cursor] = "wrong";
+
+            //Kondisi ketika salah menginputkan huruf
+            if(stats.Missed == 5)
+            {
+                //maka akan menampilkan huruf acak yg baru
+                status = new string[7];
+                //kursor juga akan keambali ke indeks ke 0;
+                cursor = 0;
+                //method yang digunakan untuk memulai ulang game
+                SetUpGame();
+            }
+        }
+        //kondisi ketika kita sudah benar semua,menginputkan data sesuai data pada halaman web
+        //atau ketika kursor sudah mencapai data terakhir.
+        if (cursor == 7)
+        {
+            //maka akan menampilkan huruf acak baru
+            status = new string[7];
+            //dan si kursor akan kembali pada posisi indeks ke 0;
+            cursor = 0;
+            //menampung dan menampilkan huruf acak.
+            GenerateChar();
+        }
+        //Menghitung variabel accuracy
+        stats.CountAccuracy();
+    }
+    //method untuk menampung huruf acak pada variabel generateChar dari variabel alphabet.
+    public void GenerateChar()
+    {
+        for(int a = 0; a<7; a++)
+        {
+            generateChar[a] = alphabet[random.Next(alphabet.Length)]; 
+        }
+    }
+}
